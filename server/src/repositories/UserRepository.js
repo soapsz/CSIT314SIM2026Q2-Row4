@@ -9,10 +9,8 @@ class UserRepository {
   async findById(id) {
     return await User.findById(id)
   }
-
-}
   async updateById(id, data) {
-    return await User.updateById{
+    return await User.updateById(
       id,
       data,
       {
