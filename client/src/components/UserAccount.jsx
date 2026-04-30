@@ -28,7 +28,7 @@ function useProfiles() {
   const [profiles, setProfiles] = useState([])
 
   useEffect(() => {
-    fetch(PROF_API, { credentials: 'include' })
+    fetch(`${PROF_API}/search?query=`, { credentials: 'include' })
       .then(r => r.json())
       .then(d => { if (d.success) setProfiles(d.data.filter(p => p.isActive)) })
       .catch(err => console.error('Failed to fetch profiles:', err))
