@@ -1,17 +1,26 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import UserAccount from './UserAccount'
-import UserProfile from './UserProfile'
+import UserAccount       from './UserAccount'
+import UserProfile       from './UserProfile'
 import FundraisingActivity from './FundraisingActivity'
-import './styles/Dashboard.css'
-import AllCampaigns from './AllCampaigns'
+import BrowseCampaigns   from './BrowseCampaigns'
+import ViewCampaigns     from './ViewCampaigns'
+import FRACategory       from './FRACategory'
+import Favourites        from './Favourites'
+import DonationHistory   from './DonationHistory'
+import Reports           from './Reports'
 
 const NAV_ITEMS = [
-  { id: 'accounts',  label: 'User Accounts', icon: '👤', permission: 'user_management' },
-  { id: 'profiles',  label: 'User Profiles',  icon: '🏷️', permission: 'user_management' },
-  { id: 'campaigns', label: 'My Campaigns',   icon: '📢', permission: 'fundraising' },
-  { id: 'browse',    label: 'Browse',         icon: '🔍', permission: 'donating' },
+  { id: 'accounts',      label: 'User Accounts',    icon: '👤', permission: 'user_management' },
+  { id: 'profiles',      label: 'User Profiles',    icon: '🏷️', permission: 'user_management' },
+  { id: 'campaigns',     label: 'My Campaigns',     icon: '📢', permission: 'fundraising' },
+  { id: 'viewcampaigns', label: 'All Campaigns',    icon: '🔍', permission: 'fundraising' },
+  { id: 'browse',        label: 'Browse',           icon: '🔍', permission: 'donating' },
+  { id: 'favourites',    label: 'Favourites',       icon: '❤️', permission: 'donating' },
+  { id: 'donations',     label: 'Donation History', icon: '💰', permission: 'donating' },
+  { id: 'categories',    label: 'FRA Categories',   icon: '🗂️', permission: 'platform_management' },
+  { id: 'reports',       label: 'Reports',          icon: '📊', permission: 'platform_management' },
 ]
 
 function NoPermission() {
@@ -89,10 +98,15 @@ export default function Dashboard() {
         </div>
       </aside>
       <main className="dash-main">
-        {active === 'accounts'  && (hasPermission('accounts')  ? <UserAccount />         : <NoPermission />)}
-        {active === 'profiles'  && (hasPermission('profiles')  ? <UserProfile />         : <NoPermission />)}
-        {active === 'campaigns' && (hasPermission('campaigns') ? <FundraisingActivity /> : <NoPermission />)}
-        {active === 'browse' && (hasPermission('browse') ? <AllCampaigns /> : <NoPermission />)}
+        {active === 'accounts'      && (hasPermission('accounts')      ? <UserAccount />         : <NoPermission />)}
+        {active === 'profiles'      && (hasPermission('profiles')      ? <UserProfile />         : <NoPermission />)}
+        {active === 'campaigns'     && (hasPermission('campaigns')     ? <FundraisingActivity /> : <NoPermission />)}
+        {active === 'viewcampaigns' && (hasPermission('viewcampaigns') ? <ViewCampaigns />       : <NoPermission />)}
+        {active === 'browse'        && (hasPermission('browse')        ? <BrowseCampaigns />     : <NoPermission />)}
+        {active === 'favourites'    && (hasPermission('favourites')    ? <Favourites />          : <NoPermission />)}
+        {active === 'donations'     && (hasPermission('donations')     ? <DonationHistory />     : <NoPermission />)}
+        {active === 'categories'    && (hasPermission('categories')    ? <FRACategory />         : <NoPermission />)}
+        {active === 'reports'       && (hasPermission('reports')       ? <Reports />             : <NoPermission />)}
         {!active && <NoPermission />}
       </main>
     </div>

@@ -12,6 +12,13 @@ beforeAll(async () => {
   await mongoose.connect(process.env.MONGO_URI)
   agent = request.agent(app)
 
+  await mongoose.connection.collection('useraccounts').deleteMany({
+    email: { $in: ['test00@gmail.com', 'test01@gmail.com', 'seedadmin@test.com'] }
+  })
+  await mongoose.connection.collection('userprofiles').deleteMany({
+    profileName: 'Test Profile For Account'
+  })
+
   const profile = await UserProfile.create({
     profileName: 'Test Profile For Account',
     description: 'Created for user account tests',
@@ -32,7 +39,6 @@ beforeAll(async () => {
   await agent
     .post('/api/auth/login')
     .send({ username: 'seedadmin', password: 'Abc.1234' })
-
 }, 30000)
 
 afterAll(async () => {
@@ -169,6 +175,7 @@ describe('User Account API', () => {
 
     it('TC10-2: should return empty array for non-matching search query', async () => {
       const res = await agent.get('/api/users-account/search?query=zzznomatchxxx')
+
       expect(res.status).toBe(200)
       expect(res.body.success).toBe(true)
       expect(Array.isArray(res.body.data)).toBe(true)

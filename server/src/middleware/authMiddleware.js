@@ -12,7 +12,7 @@ export const requireAuth = async (req, res, next) => {
   next()
 }
 
-export const requirePermission = (permission) => async (req, res, next) => {
+export const requirePermission = (...permissions) => async (req, res, next) => {
   const profile = req.user?.userProfile
   if (!profile) {
     return res.status(403).json({ success: false, message: 'No profile assigned' })
@@ -20,7 +20,7 @@ export const requirePermission = (permission) => async (req, res, next) => {
   if (!profile.isActive) {
     return res.status(403).json({ success: false, message: 'Your profile has been deactivated' })
   }
-  if (!profile.permissions.includes(permission)) {
+  if (!permissions.some(p => profile.permissions.includes(p))) {
     return res.status(403).json({ success: false, message: 'Insufficient permissions' })
   }
   next()

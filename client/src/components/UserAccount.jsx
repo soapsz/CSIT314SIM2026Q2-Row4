@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './styles/UserAccount.css'
 
 const API      = 'http://localhost:3001/api/users-account'
 const PROF_API = 'http://localhost:3001/api/user-profiles'
@@ -168,7 +167,7 @@ function ViewTab() {
       <div className="ua-list">
         {users.map(u => {
           const isExpanded  = expandedId === u._id
-          const profileName = u.userProfile?.profileName || '—'
+          const profileName = u.userProfile?.profileName || '-'
 
           return (
             <div key={u._id} className="ua-row ua-row-expandable">
@@ -193,7 +192,7 @@ function ViewTab() {
                   {u.phone       && <p className="ua-row-desc">Phone: {u.phone}</p>}
                   {u.address     && <p className="ua-row-desc">Address: {u.address}</p>}
                   {u.dateOfBirth && <p className="ua-row-desc">DOB: {new Date(u.dateOfBirth).toLocaleDateString()}</p>}
-                  <p className="ua-row-desc">Joined: {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</p>
+                  <p className="ua-row-desc">Joined: {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</p>
 
                   <div className="ua-row-actions" style={{ marginTop: '0.75rem' }}>
                     <span className={`ua-badge ${u.isActive ? 'ua-badge-active' : 'ua-badge-inactive'}`}>

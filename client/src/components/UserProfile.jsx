@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './styles/UserProfile.css'
 
 const API = 'http://localhost:3001/api/user-profiles'
 
@@ -20,9 +19,9 @@ function PermissionCheckboxes({ selected, onChange }) {
   }
 
   return (
-    <div className="up-field">
-      <label className="up-label">
-        Permissions <span className="up-required">*</span>
+    <div className="ua-field">
+      <label className="ua-label">
+        Permissions <span className="ua-required">*</span>
       </label>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {PERMISSIONS.map(p => (
@@ -34,10 +33,10 @@ function PermissionCheckboxes({ selected, onChange }) {
               type="checkbox"
               checked={selected.includes(p.value)}
               onChange={() => toggle(p.value)}
-              style={{ accentColor: 'var(--up-accent)', width: '14px', height: '14px' }}
+              style={{ accentColor: 'var(--ua-accent)', width: '14px', height: '14px' }}
             />
-            <span style={{ fontSize: '13px', color: 'var(--up-text)' }}>{p.label}</span>
-            <span style={{ fontSize: '11px', color: 'var(--up-muted)' }}>{p.desc}</span>
+            <span style={{ fontSize: '13px', color: 'var(--ua-text)' }}>{p.label}</span>
+            <span style={{ fontSize: '11px', color: 'var(--ua-muted)' }}>{p.desc}</span>
           </label>
         ))}
       </div>
@@ -49,17 +48,17 @@ export default function UserProfile() {
   const [tab, setTab] = useState('search')
 
   return (
-    <div className="up-container">
-      <div className="up-header">
-        <h2 className="up-title">User Profiles</h2>
-        <p className="up-subtitle">Manage roles available on the platform</p>
+    <div className="ua-container">
+      <div className="ua-header">
+        <h2 className="ua-title">User Profiles</h2>
+        <p className="ua-subtitle">Manage roles available on the platform</p>
       </div>
 
-      <div className="up-tabs">
+      <div className="ua-tabs">
         {['search', 'create', 'update'].map(t => (
           <button
             key={t}
-            className={`up-tab ${tab === t ? 'up-tab-active' : ''}`}
+            className={`ua-tab ${tab === t ? 'ua-tab-active' : ''}`}
             onClick={() => setTab(t)}
           >
             {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -101,20 +100,10 @@ function ViewProfiles() {
   const handleSearch = async (e) => {
     const query = e.target.value
     setSearch(query)
-
-    if (!query.trim()) {
-      fetch_()
-      return
-    }
-
+    if (!query.trim()) { fetch_(); return }
     try {
-      const res = await fetch(
-        `${API}/search?query=${encodeURIComponent(query)}`,
-        { credentials: 'include' }
-      )
-
+      const res = await fetch(`${API}/search?query=${encodeURIComponent(query)}`, { credentials: 'include' })
       const data = await res.json()
-
       if (data.success) setProfiles(data.data)
       else setProfiles([])
     } catch (err) {
@@ -124,106 +113,68 @@ function ViewProfiles() {
 
   const suspend = async (id) => {
     try {
-      const res = await fetch(`${API}/${id}/suspend`, {
-        method: 'PATCH',
-        credentials: 'include',
-      })
-
+      const res = await fetch(`${API}/${id}/suspend`, { method: 'PATCH', credentials: 'include' })
       const data = await res.json()
-
-      if (data.success) {
-        search.trim()
-          ? handleSearch({ target: { value: search } })
-          : fetch_()
-      }
+      if (data.success) search.trim() ? handleSearch({ target: { value: search } }) : fetch_()
     } catch (err) {
       console.error(err)
     }
   }
 
   return (
-    <div className="up-card">
-      <div className="up-card-header">
-        <span className="up-card-title">All profiles</span>
-        <button className="up-btn up-btn-sm" onClick={fetch_}>Refresh</button>
+    <div className="ua-card">
+      <div className="ua-card-header">
+        <span className="ua-card-title">All profiles</span>
+        <button className="ua-btn ua-btn-sm" onClick={fetch_}>Refresh</button>
       </div>
 
-      <div className="up-field">
-        <input
-          className="up-input"
-          placeholder="Search profiles..."
-          value={search}
-          onChange={handleSearch}
-        />
+      <div className="ua-field">
+        <input className="ua-input" placeholder="Search profiles..." value={search} onChange={handleSearch} />
       </div>
 
-      {loading && <p className="up-muted">Loading…</p>}
-      {error && <div className="up-msg up-msg-error">{error}</div>}
-      {!loading && !error && profiles.length === 0 && (
-        <p className="up-muted">No profiles found</p>
-      )}
+      {loading && <p className="ua-muted">Loading…</p>}
+      {error && <div className="ua-msg ua-msg-error">{error}</div>}
+      {!loading && !error && profiles.length === 0 && <p className="ua-muted">No profiles found</p>}
 
-      <div className="up-list">
+      <div className="ua-list">
         {profiles.map(p => {
           const isExpanded = expandedId === p._id
-
           return (
-            <div key={p._id} className="up-row up-row-expandable">
+            <div key={p._id} className="ua-row ua-row-expandable">
               <div
                 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
                 onClick={() => setExpandedId(isExpanded ? null : p._id)}
               >
-                <div
-                  className="up-row-dot"
-                  style={{ background: p.isActive ? '#4fffb0' : '#e24b4a' }}
-                />
-
-                <div className="up-row-body">
-                  <p className="up-row-name">{p.profileName}</p>
+                <div className="ua-row-dot" style={{ background: p.isActive ? '#4fffb0' : '#e24b4a' }} />
+                <div className="ua-row-body">
+                  <p className="ua-row-name">{p.profileName}</p>
                 </div>
-
                 <span style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.5 }}>
                   {isExpanded ? '▲' : '▼'}
                 </span>
               </div>
 
               {isExpanded && (
-                <div
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderTop: '1px solid rgba(255,255,255,0.08)',
-                    marginTop: '0.5rem',
-                  }}
-                >
-                  <p className="up-muted" style={{ fontSize: '0.72rem' }}>
-                    ID: {p._id}
-                  </p>
-
-                  <p className="up-row-name">{p.profileName}</p>
-                  {p.description && <p className="up-row-desc">{p.description}</p>}
+                <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '0.5rem' }}>
+                  <p className="ua-muted" style={{ fontSize: '0.72rem' }}>ID: {p._id}</p>
+                  <p className="ua-row-name">{p.profileName}</p>
+                  {p.description && <p className="ua-row-desc">{p.description}</p>}
 
                   {p.permissions?.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
                       {p.permissions.map(perm => (
-                        <span key={perm} className="up-perm-badge">
+                        <span key={perm} className="ua-perm-badge">
                           {perm.replace(/_/g, ' ')}
                         </span>
                       ))}
                     </div>
                   )}
 
-                  <div className="up-row-actions" style={{ marginTop: '0.75rem' }}>
-                    <span className={`up-badge ${p.isActive ? 'up-badge-active' : 'up-badge-inactive'}`}>
+                  <div className="ua-row-actions" style={{ marginTop: '0.75rem' }}>
+                    <span className={`ua-badge ${p.isActive ? 'ua-badge-active' : 'ua-badge-inactive'}`}>
                       {p.isActive ? 'Active' : 'Suspended'}
                     </span>
-
-                    <button
-                      className="up-btn-ghost"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        suspend(p._id)
-                      }}
-                    >
+                    <button className="ua-btn-ghost" onClick={(e) => { e.stopPropagation(); suspend(p._id) }}>
                       {p.isActive ? 'Suspend' : 'Activate'}
                     </button>
                   </div>
@@ -247,15 +198,8 @@ function CreateProfile() {
   }
 
   const handleSubmit = async () => {
-    if (!form.profileName.trim()) {
-      setMessage({ type: 'error', text: 'Profile name is required' })
-      return
-    }
-
-    if (!form.permissions.length) {
-      setMessage({ type: 'error', text: 'At least one permission is required' })
-      return
-    }
+    if (!form.profileName.trim()) { setMessage({ type: 'error', text: 'Profile name is required' }); return }
+    if (!form.permissions.length) { setMessage({ type: 'error', text: 'At least one permission is required' }); return }
 
     try {
       const res = await fetch(API, {
@@ -264,9 +208,7 @@ function CreateProfile() {
         credentials: 'include',
         body: JSON.stringify(form),
       })
-
       const data = await res.json()
-
       if (data.success) {
         setMessage({ type: 'success', text: `Profile "${data.data.profileName}" created!` })
         setForm({ profileName: '', description: '', permissions: [] })
@@ -279,42 +221,28 @@ function CreateProfile() {
   }
 
   return (
-    <div className="up-card">
-      <p className="up-card-title">New profile</p>
+    <div className="ua-card">
+      <p className="ua-card-title">New profile</p>
 
-      <div className="up-field">
-        <label className="up-label">Profile name</label>
-        <input
-          className="up-input"
-          name="profileName"
-          value={form.profileName}
-          onChange={handleChange}
-        />
+      <div className="ua-field">
+        <label className="ua-label">Profile name</label>
+        <input className="ua-input" name="profileName" value={form.profileName} onChange={handleChange} />
       </div>
 
-      <div className="up-field">
-        <label className="up-label">Description <span className="up-optional">(optional)</span></label>
-        <textarea
-          className="up-input up-textarea"
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          rows={3}
-        />
+      <div className="ua-field">
+        <label className="ua-label">Description <span className="ua-optional">(optional)</span></label>
+        <textarea className="ua-input ua-textarea" name="description" value={form.description} onChange={handleChange} rows={3} />
       </div>
 
       <PermissionCheckboxes
         selected={form.permissions}
-        onChange={perms => {
-          setForm(prev => ({ ...prev, permissions: perms }))
-          setMessage(null)
-        }}
+        onChange={perms => { setForm(prev => ({ ...prev, permissions: perms })); setMessage(null) }}
       />
 
-      <button className="up-btn" onClick={handleSubmit}>Create profile</button>
+      <button className="ua-btn" onClick={handleSubmit}>Create profile</button>
 
       {message && (
-        <div className={`up-msg ${message.type === 'success' ? 'up-msg-success' : 'up-msg-error'}`}>
+        <div className={`ua-msg ${message.type === 'success' ? 'ua-msg-success' : 'ua-msg-error'}`}>
           {message.text}
         </div>
       )}
@@ -328,27 +256,13 @@ function UpdateProfile() {
   const [message, setMessage] = useState(null)
 
   const handleSubmit = async () => {
-    if (!profileId.trim()) {
-      setMessage({ type: 'error', text: 'Profile ID is required' })
-      return
-    }
-
-    if (!form.permissions.length) {
-      setMessage({ type: 'error', text: 'At least one permission is required' })
-      return
-    }
+    if (!profileId.trim()) { setMessage({ type: 'error', text: 'Profile ID is required' }); return }
+    if (!form.permissions.length) { setMessage({ type: 'error', text: 'At least one permission is required' }); return }
 
     const body = {}
-
     if (form.profileName.trim()) body.profileName = form.profileName.trim()
     if (form.description.trim()) body.description = form.description.trim()
-
     body.permissions = form.permissions
-
-    if (!Object.keys(body).length) {
-      setMessage({ type: 'error', text: 'No fields to update' })
-      return
-    }
 
     try {
       const res = await fetch(`${API}/${profileId.trim()}`, {
@@ -357,9 +271,7 @@ function UpdateProfile() {
         credentials: 'include',
         body: JSON.stringify(body),
       })
-
       const data = await res.json()
-
       if (data.success) setMessage({ type: 'success', text: 'Profile updated!' })
       else setMessage({ type: 'error', text: data.message })
     } catch {
@@ -368,64 +280,36 @@ function UpdateProfile() {
   }
 
   return (
-    <div className="up-card">
-      <p className="up-card-title">Update profile</p>
+    <div className="ua-card">
+      <p className="ua-card-title">Update profile</p>
 
-      <div className="up-field">
-        <label className="up-label">
-          Profile ID <span className="up-required">*</span>
-        </label>
-
-        <input
-          className="up-input"
-          value={profileId}
-          onChange={e => {
-            setProfileId(e.target.value)
-            setMessage(null)
-          }}
-        />
+      <div className="ua-field">
+        <label className="ua-label">Profile ID <span className="ua-required">*</span></label>
+        <input className="ua-input" value={profileId} onChange={e => { setProfileId(e.target.value); setMessage(null) }} />
       </div>
 
-      <div className="up-divider" />
-      <p className="up-hint">Leave fields blank to keep existing values</p>
+      <div className="ua-divider" />
+      <p className="ua-hint">Leave fields blank to keep existing values</p>
 
-      <div className="up-field">
-        <label className="up-label">Profile name</label>
-        <input
-          className="up-input"
-          value={form.profileName}
-          onChange={e => {
-            setForm(p => ({ ...p, profileName: e.target.value }))
-            setMessage(null)
-          }}
-        />
+      <div className="ua-field">
+        <label className="ua-label">Profile name</label>
+        <input className="ua-input" value={form.profileName} onChange={e => { setForm(p => ({ ...p, profileName: e.target.value })); setMessage(null) }} />
       </div>
 
-      <div className="up-field">
-        <label className="up-label">Description</label>
-        <textarea
-          className="up-input up-textarea"
-          rows={3}
-          value={form.description}
-          onChange={e => {
-            setForm(p => ({ ...p, description: e.target.value }))
-            setMessage(null)
-          }}
-        />
+      <div className="ua-field">
+        <label className="ua-label">Description</label>
+        <textarea className="ua-input ua-textarea" rows={3} value={form.description} onChange={e => { setForm(p => ({ ...p, description: e.target.value })); setMessage(null) }} />
       </div>
 
       <PermissionCheckboxes
         selected={form.permissions}
-        onChange={perms => {
-          setForm(prev => ({ ...prev, permissions: perms }))
-          setMessage(null)
-        }}
+        onChange={perms => { setForm(prev => ({ ...prev, permissions: perms })); setMessage(null) }}
       />
 
-      <button className="up-btn" onClick={handleSubmit}>Save changes</button>
+      <button className="ua-btn" onClick={handleSubmit}>Save changes</button>
 
       {message && (
-        <div className={`up-msg ${message.type === 'success' ? 'up-msg-success' : 'up-msg-error'}`}>
+        <div className={`ua-msg ${message.type === 'success' ? 'ua-msg-success' : 'ua-msg-error'}`}>
           {message.text}
         </div>
       )}

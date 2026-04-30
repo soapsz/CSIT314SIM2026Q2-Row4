@@ -11,6 +11,11 @@ beforeAll(async () => {
   await mongoose.connect(process.env.MONGO_URI)
   agent = request.agent(app)
 
+  await mongoose.connection.collection('useraccounts').deleteMany({ email: 'profileadmin@test.com' })
+  await mongoose.connection.collection('userprofiles').deleteMany({
+    profileName: { $in: ['Test Profile', 'Test Profile Updated', 'Admin Profile For Tests'] }
+  })
+
   const adminProfile = await UserProfile.create({
     profileName: 'Admin Profile For Tests',
     description: 'Seed admin profile',
@@ -30,13 +35,10 @@ beforeAll(async () => {
   await agent
     .post('/api/auth/login')
     .send({ username: 'profileadmin', password: 'Abc.1234' })
-
 }, 30000)
 
 afterAll(async () => {
-  await mongoose.connection.collection('useraccounts').deleteMany({
-    email: 'profileadmin@test.com'
-  })
+  await mongoose.connection.collection('useraccounts').deleteMany({ email: 'profileadmin@test.com' })
   await mongoose.connection.collection('userprofiles').deleteMany({
     profileName: { $in: ['Test Profile', 'Test Profile Updated', 'Admin Profile For Tests'] }
   })
@@ -174,6 +176,7 @@ describe('User Profile API', () => {
 
     it('TC05-2: should return empty array for non-matching search query', async () => {
       const res = await agent.get('/api/user-profiles/search?query=zzznomatchxxx')
+
       expect(res.status).toBe(200)
       expect(res.body.success).toBe(true)
       expect(Array.isArray(res.body.data)).toBe(true)

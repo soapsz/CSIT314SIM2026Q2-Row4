@@ -13,6 +13,9 @@ beforeAll(async () => {
   await mongoose.connect(process.env.MONGO_URI)
   agent = request.agent(app)
 
+  await mongoose.connection.collection('useraccounts').deleteMany({ email: 'auth@test.com' })
+  await mongoose.connection.collection('userprofiles').deleteMany({ profileName: 'Auth Test Profile' })
+
   const profile = await UserProfile.create({
     profileName: 'Auth Test Profile',
     description: 'For auth testing',
@@ -34,7 +37,6 @@ beforeAll(async () => {
   await agent
     .post('/api/auth/login')
     .send({ username: 'authuser', password: 'Abc.1234' })
-
 }, 30000)
 
 afterAll(async () => {
@@ -98,21 +100,14 @@ describe('TC-11: User Login', () => {
 
 describe('TC-12: User Logout', () => {
   beforeAll(async () => {
-    await agent
-      .put(`/api/users-account/${userId}`)
-      .send({
-        username: 'authuser',
-        email: 'auth@test.com',
-        isActive: true,
-        userProfile: userProfileId
-      })
+    await UserAccount.updateOne(
+      { _id: new mongoose.Types.ObjectId(userId) },
+      { isActive: true }
+    )
 
     await agent
       .post('/api/auth/login')
-      .send({
-        username: 'authuser',
-        password: 'Abc.1234'
-      })
+      .send({ username: 'authuser', password: 'Abc.1234' })
   })
 
   it('TC12-1: should logout successfully', async () => {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 
-const API = 'http://localhost:3001/api/fra'
+const API     = 'http://localhost:3001/api/fra'
+const CAT_API = 'http://localhost:3001/api/fra-categories'
 
 function Field({ label, error, children }) {
   return (
@@ -21,9 +22,132 @@ function StatusBadge({ status }) {
   return <span className={`ua-badge ${map[status] || ''}`}>{status}</span>
 }
 
+function ProgressBar({ totalRaised = 0, targetAmount = 0 }) {
+  const pct = targetAmount > 0 ? Math.min(100, (totalRaised / targetAmount) * 100) : 0
+  return (
+    <div style={{ marginTop: '0.75rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
+        <span style={{ color: 'var(--ua-muted)' }}>Raised</span>
+        <span style={{ color: 'var(--ua-accent)', fontWeight: 600 }}>
+          ${totalRaised.toLocaleString()} / ${targetAmount.toLocaleString()}
+        </span>
+      </div>
+      <div style={{ background: 'var(--ua-border)', borderRadius: '999px', height: '6px', overflow: 'hidden' }}>
+        <div style={{
+          height: '100%',
+          borderRadius: '999px',
+          background: 'var(--ua-accent)',
+          width: `${pct}%`,
+          transition: 'width 0.4s ease',
+        }} />
+      </div>
+      <p style={{ fontSize: '0.7rem', color: 'var(--ua-muted)', marginTop: '3px' }}>
+        {pct.toFixed(1)}% funded
+      </p>
+    </div>
+  )
+}
+
+function FRADetailCard({ fra, categoryName, showActions, onSuspend, onComplete }) {
+  return (
+    <div style={{ borderTop: '1px solid var(--ua-border-2)', marginTop: '12px', paddingTop: '14px' }}>
+
+      <p className="ua-muted" style={{ fontSize: '0.72rem', marginBottom: '0.5rem' }}>ID: {fra._id}</p>
+
+      {fra.description && (
+        <p className="ua-row-desc" style={{ marginBottom: '0.75rem' }}>{fra.description}</p>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px' }}>
+        <div style={{ padding: '10px', background: 'var(--ua-bg)', borderRadius: '6px', border: '1px solid var(--ua-border)' }}>
+          <p className="ua-muted" style={{ fontSize: '11px', marginBottom: '4px' }}>TARGET AMOUNT</p>
+          <p style={{ color: 'var(--ua-accent)', fontWeight: 600 }}>${fra.targetAmount?.toLocaleString()}</p>
+        </div>
+        <div style={{ padding: '10px', background: 'var(--ua-bg)', borderRadius: '6px', border: '1px solid var(--ua-border)' }}>
+          <p className="ua-muted" style={{ fontSize: '11px', marginBottom: '4px' }}>TOTAL RAISED</p>
+          <p style={{ color: 'var(--ua-accent)', fontWeight: 600 }}>${(fra.totalRaised ?? 0).toLocaleString()}</p>
+        </div>
+        <div style={{ padding: '10px', background: 'var(--ua-bg)', borderRadius: '6px', border: '1px solid var(--ua-border)' }}>
+          <p className="ua-muted" style={{ fontSize: '11px', marginBottom: '4px' }}>VIEWS</p>
+          <p style={{ color: 'var(--ua-text)', fontWeight: 600 }}>👁 {fra.viewCount}</p>
+        </div>
+        <div style={{ padding: '10px', background: 'var(--ua-bg)', borderRadius: '6px', border: '1px solid var(--ua-border)' }}>
+          <p className="ua-muted" style={{ fontSize: '11px', marginBottom: '4px' }}>SHORTLISTS</p>
+          <p style={{ color: 'var(--ua-text)', fontWeight: 600 }}>🔖 {fra.shortlistCount}</p>
+        </div>
+        <div style={{ padding: '10px', background: 'var(--ua-bg)', borderRadius: '6px', border: '1px solid var(--ua-border)' }}>
+          <p className="ua-muted" style={{ fontSize: '11px', marginBottom: '4px' }}>CREATED</p>
+          <p style={{ color: 'var(--ua-text)', fontWeight: 600 }}>{new Date(fra.createdAt).toLocaleDateString()}</p>
+        </div>
+        {fra.completedAt && (
+          <div style={{ padding: '10px', background: 'var(--ua-bg)', borderRadius: '6px', border: '1px solid var(--ua-border)' }}>
+            <p className="ua-muted" style={{ fontSize: '11px', marginBottom: '4px' }}>COMPLETED</p>
+            <p style={{ color: 'var(--ua-text)', fontWeight: 600 }}>{new Date(fra.completedAt).toLocaleDateString()}</p>
+          </div>
+        )}
+      </div>
+
+      <ProgressBar totalRaised={fra.totalRaised ?? 0} targetAmount={fra.targetAmount ?? 0} />
+
+      {showActions && (
+        <div className="ua-row-actions" style={{ marginTop: '0.75rem' }}>
+          {fra.status !== 'completed' && (
+            <button
+              className="ua-btn-ghost"
+              onClick={(e) => { e.stopPropagation(); onSuspend(fra._id) }}
+            >
+              {fra.status === 'active' ? 'Suspend' : 'Activate'}
+            </button>
+          )}
+          {fra.status === 'active' && (
+            <button
+              className="ua-btn-ghost"
+              style={{ color: '#64a0ff', borderColor: '#64a0ff' }}
+              onClick={(e) => { e.stopPropagation(); onComplete(fra._id) }}
+            >
+              Mark Complete
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const blankForm = () => ({
   title: '', description: '', targetAmount: '', category: ''
 })
+
+function useCategories() {
+  const [categories, setCategories] = useState([])
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res  = await fetch(CAT_API, { credentials: 'include' })
+        const data = await res.json()
+        if (data.success) {
+          setCategories((data.data ?? []).filter(c => c.isActive === true))
+        }
+      } catch { /* ignore */ }
+    }
+    load()
+  }, [])
+
+  return categories
+}
+
+function CategorySelect({ name, value, onChange, includeBlank = true, blankLabel = 'Select category (optional)' }) {
+  const categories = useCategories()
+  return (
+    <select className="ua-input" name={name} value={value} onChange={onChange}>
+      {includeBlank && <option value="">{blankLabel}</option>}
+      {categories.map(c => (
+        <option key={c._id} value={c._id}>{c.name}</option>
+      ))}
+    </select>
+  )
+}
 
 export default function FundraisingActivity() {
   const [tab, setTab] = useState('search')
@@ -44,7 +168,7 @@ export default function FundraisingActivity() {
           </button>
         ))}
       </div>
-      {tab === 'search'    && <ViewTab />}
+      {tab === 'search'  && <ViewTab />}
       {tab === 'create'  && <CreateTab />}
       {tab === 'update'  && <UpdateTab />}
       {tab === 'history' && <HistoryTab />}
@@ -120,53 +244,34 @@ function ViewTab() {
 
       <div className="ua-list">
         {fras.map(fra => {
-          const isExpanded = expandedId === fra._id
+          const isExpanded   = expandedId === fra._id
+          const categoryName = fra.category?.name ?? '-'
+
           return (
             <div key={fra._id} className="ua-row ua-row-expandable">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }} onClick={() => setExpanded(isExpanded ? null : fra._id)}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                onClick={() => setExpanded(isExpanded ? null : fra._id)}
+              >
                 <div className="ua-avatar" style={{ width: 34, height: 34, fontSize: 12 }}>
                   {fra.title.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="ua-row-body">
                   <p className="ua-row-name">{fra.title}</p>
-                  <p className="ua-row-desc">{fra.category || '—'} · ${fra.targetAmount?.toLocaleString()}</p>
+                  <p className="ua-row-desc">{categoryName} · ${fra.targetAmount?.toLocaleString()}</p>
                 </div>
                 <StatusBadge status={fra.status} />
                 <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>{isExpanded ? '▲' : '▼'}</span>
               </div>
 
               {isExpanded && (
-                <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--ua-border-2)', marginTop: '0.5rem' }}>
-                  <p className="ua-muted" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>ID: {fra._id}</p>
-                  <p className="ua-row-name">{fra.title}</p>
-                  {fra.description && <p className="ua-row-desc">{fra.description}</p>}
-                  <p className="ua-row-desc">Target: ${fra.targetAmount?.toLocaleString()}</p>
-                  <p className="ua-row-desc">Category: {fra.category || '—'}</p>
-                  <p className="ua-row-desc">Created: {new Date(fra.createdAt).toLocaleDateString()}</p>
-
-                  <div style={{ display: 'flex', gap: '16px', margin: '0.5rem 0', fontSize: '0.8rem', color: 'var(--ua-muted)', alignItems: 'center' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>👁 {fra.viewCount} views</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>🔖 {fra.shortlistCount} shortlists</span>
-                  </div>
-
-                  <div className="ua-row-actions" style={{ marginTop: '0.75rem' }}>
-                    <StatusBadge status={fra.status} />
-                    {fra.status !== 'completed' && (
-                      <button className="ua-btn-ghost" onClick={(e) => { e.stopPropagation(); suspend(fra._id) }}>
-                        {fra.status === 'active' ? 'Suspend' : 'Activate'}
-                      </button>
-                    )}
-                    {fra.status === 'active' && (
-                      <button
-                        className="ua-btn-ghost"
-                        style={{ color: '#64a0ff', borderColor: '#64a0ff' }}
-                        onClick={(e) => { e.stopPropagation(); complete(fra._id) }}
-                      >
-                        Mark Complete
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <FRADetailCard
+                  fra={fra}
+                  categoryName={categoryName}
+                  showActions={true}
+                  onSuspend={suspend}
+                  onComplete={complete}
+                />
               )}
             </div>
           )
@@ -190,17 +295,25 @@ function CreateTab() {
 
   const handleSubmit = async () => {
     const errs = {}
-    if (!form.title.trim())             errs.title       = 'Title is required'
+    if (!form.title.trim())             errs.title        = 'Title is required'
     if (!form.targetAmount)             errs.targetAmount = 'Target amount is required'
     if (Number(form.targetAmount) <= 0) errs.targetAmount = 'Target amount must be greater than 0'
     if (Object.keys(errs).length) { setErrors(errs); return }
+
+    const body = {
+      title:        form.title.trim(),
+      description:  form.description.trim(),
+      targetAmount: Number(form.targetAmount),
+    }
+
+    if (form.category) body.category = form.category
 
     try {
       const res  = await fetch(API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ ...form, targetAmount: Number(form.targetAmount) }),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (data.success) {
@@ -232,7 +345,7 @@ function CreateTab() {
       </Field>
 
       <Field label={<>Category <span className="ua-optional">(optional)</span></>}>
-        <input className="ua-input" name="category" placeholder="e.g. Education, Medical" value={form.category} onChange={handleChange} />
+        <CategorySelect name="category" value={form.category} onChange={handleChange} />
       </Field>
 
       <button className="ua-btn" onClick={handleSubmit}>Create campaign</button>
@@ -261,10 +374,10 @@ function UpdateTab() {
     if (form.title.trim())       body.title        = form.title.trim()
     if (form.description.trim()) body.description  = form.description.trim()
     if (form.targetAmount)       body.targetAmount = Number(form.targetAmount)
-    if (form.category.trim())    body.category     = form.category.trim()
+    if (form.category)           body.category     = form.category
 
-    if (!Object.keys(body).length) { setMessage({ type: 'error', text: 'No fields to update' }); return }
-    if (body.targetAmount <= 0)    { setErrors({ targetAmount: 'Must be greater than 0' }); return }
+    if (!Object.keys(body).length)  { setMessage({ type: 'error', text: 'No fields to update' }); return }
+    if (body.targetAmount <= 0)     { setErrors({ targetAmount: 'Must be greater than 0' }); return }
 
     try {
       const res  = await fetch(`${API}/${fraId.trim()}`, {
@@ -305,7 +418,12 @@ function UpdateTab() {
       </Field>
 
       <Field label="Category">
-        <input className="ua-input" name="category" placeholder="New category (optional)" value={form.category} onChange={handleChange} />
+        <CategorySelect
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          blankLabel="— keep existing —"
+        />
       </Field>
 
       <button className="ua-btn" onClick={handleSubmit}>Save changes</button>
@@ -320,6 +438,7 @@ function HistoryTab() {
   const [error, setError]         = useState(null)
   const [expandedId, setExpanded] = useState(null)
   const [filters, setFilters]     = useState({ category: '', from: '', to: '' })
+  const categories                = useCategories()
 
   const fetchCompleted = async () => {
     setLoading(true); setError(null)
@@ -353,9 +472,21 @@ function HistoryTab() {
       </div>
 
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        <input className="ua-input" style={{ flex: 1, minWidth: '120px' }} name="category" placeholder="Filter by category" value={filters.category} onChange={handleFilterChange} />
+        <select
+          className="ua-input"
+          style={{ flex: 1, minWidth: '140px' }}
+          name="category"
+          value={filters.category}
+          onChange={handleFilterChange}
+        >
+          <option value="">All categories</option>
+          {categories.map(c => (
+            <option key={c._id} value={c._id}>{c.name}</option>
+          ))}
+        </select>
+
         <input className="ua-input" style={{ flex: 1, minWidth: '120px' }} name="from" type="date" value={filters.from} onChange={handleFilterChange} />
-        <input className="ua-input" style={{ flex: 1, minWidth: '120px' }} name="to" type="date" value={filters.to} onChange={handleFilterChange} />
+        <input className="ua-input" style={{ flex: 1, minWidth: '120px' }} name="to"   type="date" value={filters.to}   onChange={handleFilterChange} />
       </div>
 
       {loading && <p className="ua-muted">Loading…</p>}
@@ -364,34 +495,32 @@ function HistoryTab() {
 
       <div className="ua-list">
         {fras.map(fra => {
-          const isExpanded = expandedId === fra._id
+          const isExpanded   = expandedId === fra._id
+          const categoryName = fra.category?.name ?? '-'
+
           return (
             <div key={fra._id} className="ua-row ua-row-expandable">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }} onClick={() => setExpanded(isExpanded ? null : fra._id)}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                onClick={() => setExpanded(isExpanded ? null : fra._id)}
+              >
                 <div className="ua-avatar" style={{ width: 34, height: 34, fontSize: 12 }}>
                   {fra.title.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="ua-row-body">
                   <p className="ua-row-name">{fra.title}</p>
-                  <p className="ua-row-desc">{fra.category || '—'} · Completed {fra.completedAt ? new Date(fra.completedAt).toLocaleDateString() : '—'}</p>
+                  <p className="ua-row-desc">{categoryName} · Completed {fra.completedAt ? new Date(fra.completedAt).toLocaleDateString() : '-'}</p>
                 </div>
                 <StatusBadge status={fra.status} />
                 <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>{isExpanded ? '▲' : '▼'}</span>
               </div>
 
               {isExpanded && (
-                <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--ua-border-2)', marginTop: '0.5rem' }}>
-                  <p className="ua-muted" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>ID: {fra._id}</p>
-                  <p className="ua-row-name">{fra.title}</p>
-                  {fra.description && <p className="ua-row-desc">{fra.description}</p>}
-                  <p className="ua-row-desc">Target: ${fra.targetAmount?.toLocaleString()}</p>
-                  <p className="ua-row-desc">Category: {fra.category || '—'}</p>
-                  <p className="ua-row-desc">Completed: {fra.completedAt ? new Date(fra.completedAt).toLocaleDateString() : '—'}</p>
-                  <div style={{ display: 'flex', gap: '16px', margin: '0.5rem 0', fontSize: '0.8rem', color: 'var(--ua-muted)', alignItems: 'center' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>👁 {fra.viewCount} views</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>🔖 {fra.shortlistCount} shortlists</span>
-                  </div>
-                </div>
+                <FRADetailCard
+                  fra={fra}
+                  categoryName={categoryName}
+                  showActions={false}
+                />
               )}
             </div>
           )

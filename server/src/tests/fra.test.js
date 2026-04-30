@@ -5,6 +5,7 @@ import app from '../../index.js'
 import UserProfile from '../models/UserProfile.js'
 import UserAccount from '../models/UserAccount.js'
 import FundraisingActivity from '../models/FundraisingActivity.js'
+import FRACategory from '../models/FRACategory.js'
 
 let agent
 let doneeAgent
@@ -13,11 +14,29 @@ let doneeUserId
 let frProfileId
 let doneeProfileId
 let fraId
+let educationCategoryId
+let medicalCategoryId
 
 beforeAll(async () => {
   await mongoose.connect(process.env.MONGO_URI)
   agent      = request.agent(app)
   doneeAgent = request.agent(app)
+
+  await mongoose.connection.collection('useraccounts').deleteMany({
+    email: { $in: ['fruser@test.com', 'doneeuser@test.com'] }
+  })
+  await mongoose.connection.collection('userprofiles').deleteMany({
+    profileName: { $in: ['FR Test Profile', 'Donee Test Profile'] }
+  })
+  await mongoose.connection.collection('fracategories').deleteMany({
+    name: { $in: ['Education_FRA', 'Medical_FRA'] }
+  })
+
+  const educationCategory = await FRACategory.create({ name: 'Education_FRA', isActive: true })
+  educationCategoryId = educationCategory._id
+
+  const medicalCategory = await FRACategory.create({ name: 'Medical_FRA', isActive: true })
+  medicalCategoryId = medicalCategory._id
 
   const frProfile = await UserProfile.create({
     profileName: 'FR Test Profile',
@@ -69,6 +88,12 @@ afterAll(async () => {
   await mongoose.connection.collection('fundraisingactivities').deleteMany({
     createdBy: new mongoose.Types.ObjectId(frUserId)
   })
+  await mongoose.connection.collection('fracategories').deleteMany({
+    name: { $in: ['Education_FRA', 'Medical_FRA'] }
+  })
+  await mongoose.connection.collection('favourites').deleteMany({
+    donee: new mongoose.Types.ObjectId(doneeUserId)
+  })
   await mongoose.connection.close()
 }, 30000)
 
@@ -80,7 +105,7 @@ describe('TC-13: Create FRA', () => {
         title: 'Help Build a School',
         description: 'We need funds to build a school',
         targetAmount: 10000,
-        category: 'Education'
+        category: educationCategoryId,
       })
 
     expect(res.status).toBe(201)
@@ -165,7 +190,7 @@ describe('TC-15: Update FRA', () => {
         title: 'Updated School Campaign',
         targetAmount: 15000,
         description: 'Updated description',
-        category: 'Education'
+        category: educationCategoryId,
       })
 
     expect(res.status).toBe(200)
@@ -295,11 +320,11 @@ describe('TC-27: View FRA view count', () => {
 })
 
 describe('TC-28: View FRA shortlist count', () => {
-  it('TC28-1: should increment shortlistCount when donee shortlists an FRA', async () => {
+  it('TC28-1: should increment shortlistCount when donee favourites an FRA', async () => {
     const before = await agent.get(`/api/fra/${fraId}`)
     const shortlistBefore = before.body.data.shortlistCount
 
-    await doneeAgent.post(`/api/fra/${fraId}/shortlist`)
+    await doneeAgent.post(`/api/favourites/${fraId}`)
 
     const after = await agent.get(`/api/fra/${fraId}`)
     expect(after.body.data.shortlistCount).toBeGreaterThan(shortlistBefore)
@@ -312,7 +337,7 @@ describe('TC-29: Search completed FRA history', () => {
       title: 'Completed Medical Campaign',
       description: 'A completed campaign',
       targetAmount: 5000,
-      category: 'Medical',
+      category: medicalCategoryId,
       status: 'completed',
       createdBy: frUserId,
       completedAt: new Date('2024-06-01')
@@ -329,7 +354,7 @@ describe('TC-29: Search completed FRA history', () => {
   })
 
   it('TC29-2: should filter completed FRAs by category', async () => {
-    const res = await agent.get('/api/fra/completed?category=Medical')
+    const res = await agent.get(`/api/fra/completed?category=${medicalCategoryId}`)
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
@@ -353,7 +378,7 @@ describe('TC-30: View completed FRA', () => {
       title: 'View Completed FRA Test',
       description: 'Testing view of completed FRA',
       targetAmount: 3000,
-      category: 'Education',
+      category: educationCategoryId,
       status: 'completed',
       createdBy: frUserId,
       completedAt: new Date()
