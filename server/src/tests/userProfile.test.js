@@ -172,12 +172,12 @@ describe('User Profile API', () => {
       expect(Array.isArray(res.body.data)).toBe(true)
     })
 
-    it('TC05-2: should return 400 when search query is empty', async () => {
-      const res = await agent.get('/api/user-profiles/search?query=')
-
-      expect(res.status).toBe(400)
-      expect(res.body.success).toBe(false)
-      expect(res.body.message).toBe('Search query is required')
+    it('TC05-2: should return empty array for non-matching search query', async () => {
+      const res = await agent.get('/api/user-profiles/search?query=zzznomatchxxx')
+      expect(res.status).toBe(200)
+      expect(res.body.success).toBe(true)
+      expect(Array.isArray(res.body.data)).toBe(true)
+      expect(res.body.data.length).toBe(0)
     })
   })
 })
