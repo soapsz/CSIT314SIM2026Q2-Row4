@@ -4,8 +4,8 @@ class LoginController {
   async login(req, res) {
     try {
       const { username, password } = req.body
-      const user = await LoginService.login(username, password, req)
-      res.json(user)
+      const userAccount = await LoginService.login(username, password, req)
+      res.json(userAccount)
     } catch (err) {
       res.status(401).json({ message: err.message })
     }

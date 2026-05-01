@@ -4,16 +4,16 @@ export const requireAuth = async (req, res, next) => {
   if (!req.session.userId) {
     return res.status(401).json({ success: false, message: 'Not authenticated' })
   }
-  const user = await UserRepository.findById(req.session.userId)
-  if (!user) {
+  const userAccount = await UserRepository.findById(req.session.userId)
+  if (!userAccount) {
     return res.status(401).json({ success: false, message: 'User not found' })
   }
-  req.user = user
+  req.userAccount = userAccount
   next()
 }
 
 export const requirePermission = (...permissions) => async (req, res, next) => {
-  const profile = req.user?.userProfile
+  const profile = req.userAccount?.userProfile
   if (!profile) {
     return res.status(403).json({ success: false, message: 'No profile assigned' })
   }
@@ -31,15 +31,15 @@ export const me = async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ success: false, message: 'Not authenticated' })
     }
-    const user = await UserRepository.findById(req.session.userId)
-    if (!user) return res.status(401).json({ success: false, message: 'User not found' })
+    const userAccount = await UserRepository.findById(req.session.userId)
+    if (!userAccount) return res.status(401).json({ success: false, message: 'User not found' })
     res.json({
       success: true,
       data: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        userProfile: user.userProfile
+        _id: userAccount._id,
+        username: userAccount.username,
+        email: userAccount.email,
+        userProfile: userAccount.userProfile
       }
     })
   } catch (error) {

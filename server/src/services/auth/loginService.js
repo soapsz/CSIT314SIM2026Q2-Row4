@@ -9,17 +9,17 @@ class LoginService {
     if (!password || password.trim() === '') {
       throw new Error('Password is required')
     }
-    const user = await UserRepository.findByUsername(username)
-    if (!user) throw new Error('Invalid credentials')
-    if (!user.isActive) throw new Error('Account is suspended')
-    const passwordMatch = await bcrypt.compare(password, user.password)
+    const userAccount = await UserRepository.findByUsername(username)
+    if (!userAccount) throw new Error('Invalid credentials')
+    if (!userAccount.isActive) throw new Error('Account is suspended')
+    const passwordMatch = await bcrypt.compare(password, userAccount.password)
     if (!passwordMatch) throw new Error('Invalid credentials')
-    req.session.userId = user._id
+    req.session.userId = userAccount._id
     return {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      userProfile: user.userProfile
+      _id: userAccount._id,
+      username: userAccount.username,
+      email: userAccount.email,
+      userProfile: userAccount.userProfile
     }
   }
 }
