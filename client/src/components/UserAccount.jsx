@@ -85,14 +85,14 @@ export default function UserAccount() {
         ))}
       </div>
 
-      {tab === 'search'   && <ViewTab />}
-      {tab === 'create' && <CreateTab />}
-      {tab === 'update' && <UpdateTab />}
+      {tab === 'search'   && <ViewAccounts />}
+      {tab === 'create' && <CreateAccount />}
+      {tab === 'update' && <UpdateAccount />}
     </div>
   )
 }
 
-function ViewTab() {
+function ViewAccounts() {
   const [users, setUsers]           = useState([])
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
@@ -117,7 +117,7 @@ function ViewTab() {
 
   useEffect(() => { fetchUsers() }, [])
 
-  const handleSearch = async (e) => {
+  const searchAccount = async (e) => {
     const query = e.target.value
     setSearch(query)
     if (!query.trim()) { fetchUsers(); return }
@@ -131,12 +131,12 @@ function ViewTab() {
     }
   }
 
-  const suspend = async (id) => {
+  const suspendAccount = async (id) => {
     try {
       const res  = await fetch(`${API}/${id}/suspend`, { method: 'PATCH', credentials: 'include' })
       const data = await res.json()
       if (data.success) {
-        if (search.trim()) handleSearch({ target: { value: search } })
+        if (search.trim()) searchAccount({ target: { value: search } })
         else fetchUsers()
       }
     } catch (err) {
@@ -156,7 +156,7 @@ function ViewTab() {
           className="ua-input"
           placeholder="Search users..."
           value={search}
-          onChange={handleSearch}
+          onChange={searchAccount}
         />
       </div>
 
@@ -200,7 +200,7 @@ function ViewTab() {
                     </span>
                     <button
                       className="ua-btn-ghost"
-                      onClick={(e) => { e.stopPropagation(); suspend(u._id) }}
+                      onClick={(e) => { e.stopPropagation(); suspendAccount(u._id) }}
                     >
                       {u.isActive ? 'Suspend' : 'Activate'}
                     </button>
@@ -215,7 +215,7 @@ function ViewTab() {
   )
 }
 
-function CreateTab() {
+function CreateAccount() {
   const { profiles, defaultProfileId } = useProfiles()
   const [form, setForm]                = useState(() => blankForm())
   const [errors, setErrors]            = useState({})
@@ -310,7 +310,7 @@ function CreateTab() {
   )
 }
 
-function UpdateTab() {
+function UpdateAccount() {
   const { profiles }            = useProfiles()
   const [userId, setUserId]     = useState('')
   const [form, setForm]         = useState(blankForm)
